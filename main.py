@@ -9,6 +9,11 @@ import math
 centerNum = -1
 averagesArray = []
 centerArray = []
+varianceArray = []
+standardisedValuesArray = []
+geneAveragesDict = dict()
+geneCenterArray = []
+mostVariableGenesDict = dict()
 
 
 def averages(accumulator, current):
@@ -22,7 +27,7 @@ def averages(accumulator, current):
             accumulator[currentIndex] = tuple(tupleList)
         else:
             tupleList = list(accumulator[currentIndex])
-            tupleList[1] /= 5068
+            tupleList[1] /= 534
             accumulator[currentIndex] = tuple(tupleList)
             accumulator.append((current[0], current[2]))
     return accumulator
@@ -46,9 +51,55 @@ def variance(accumulator, current):
             accumulator[currentIndex] = tuple(tupleList)
         else:
             tupleList = list(accumulator[currentIndex])
-            tupleList[1] /= 5068
+            tupleList[1] /= 534
             accumulator[currentIndex] = tuple(tupleList)
             accumulator.append((current[0], current[2]))
+    return accumulator
+
+
+def geneAverage(accumulator, current):
+    if not (current[1] in accumulator):
+        accumulator[current[1]] = [current[2], 1]
+    else:
+        accumulator[current[1]] = [accumulator[current[1]][0] + current[2], accumulator[current[1]][1] + 1]
+        if accumulator[current[1]][1] == 5068:
+            accumulator[current[1]][0] = accumulator[current[1]][0] / 5068
+
+    return accumulator
+
+
+def topG(accumulator, current):
+    if accumulator[1] < 500:
+        accumulator[0][current[0]] = current[1]
+        accumulator[1] += 1
+    return accumulator
+
+
+def geneFilter(accumulator, current):
+    if current[1] in mostVariableGenesDict:
+        accumulator.append(current)
+    return accumulator
+
+
+def rankGenes(accumulator, current):
+    if len(accumulator[1]) == 0:
+        accumulator[1].append((current[0], current[1], current[2]))
+    else:
+        if accumulator[1][len(accumulator[1]) - 1][1] == current[1]:
+            accumulator[1].append((current[0], current[1], current[2]))
+        else:
+            accumulator[1].sort(key=lambda x: x[2], reverse=True)
+            for i in range(0, len(accumulator[1])):
+                accumulator[0].append((accumulator[1][i][0], accumulator[1][i][1], accumulator[1][i][2], i + 1))
+            accumulator[1] = []
+    return accumulator
+
+
+def groupCells(accumulator, current):
+    if not (current[0] in accumulator):
+        accumulator[current[0]] = [current[2]]
+    else:
+        accumulator[current[0]].append(current[2])
     return accumulator
 
 
@@ -56,7 +107,7 @@ if __name__ == '__main__':
     # startingData
 
     df = pd.read_table('ekspresije.tsv', index_col=0)
-
+    print(df.shape)
     data = [(cell, gene, value) for cell in df.columns
             for gene, value in df[cell].items()]
 
@@ -74,4 +125,21 @@ if __name__ == '__main__':
     standardisedValuesArray = list(map(lambda x: (x[0], x[1], x[2] / standardDeviationDict[x[0]]), centerArray))
 
     # 2.1
+    geneAveragesDict = reduce(geneAverage, standardisedValuesArray, dict())
+    geneCenterArray = list(map(lambda x: (x[1], x[0], x[2] - geneAveragesDict[x[1]][0]), standardisedValuesArray))
+    geneCenterArray.sort(key=lambda x: x[0])
+    geneVarianceArray = reduce(variance, geneCenterArray, [])
 
+    # 2.2
+    mostVariableGenesArray = sorted(geneVarianceArray, key=lambda x: abs(x[1]), reverse=True)
+    mostVariableGenesDict = reduce(topG, geneVarianceArray, [dict(), 0])[0]
+
+    # 2.3
+    filteredGenes = sorted(reduce(geneFilter, standardisedValuesArray, []), key=lambda x: x[1])
+
+    # 2.5
+    rankedGenes = reduce(rankGenes, filteredGenes, [[], []])[0]
+
+    # 3.1
+    groupCellsArray = reduce(groupCells, rankedGenes, dict())
+    print(groupCellsArray)
