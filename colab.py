@@ -19,6 +19,7 @@ geneAveragesDict = dict()
 geneCenterArray = []
 mostVariableGenesDict = dict()
 points = []
+embedding = pd.read_table('/content/gdrive/MyDrive/umap.tsv')
 
 def average_finalize(current):
     tupleList = list(current)
@@ -143,9 +144,17 @@ def cluster(k, max_interations):
     #centroids = list(enumerate(list(map(lambda _:list(map(lambda _: uniform(min(list(map(lambda a:min(a),points.values()))), max(list(map(lambda a:max(a),points.values())))), list(points.values())[0])),list(range(0,k))))))
     
     points = dict(map(lambda v: (v, (points[v], 0)),points))
-    for _ in range(0, max_interations+1):
+    for i in range(0, max_interations+1):
         points = dict(map(lambda v: (v, (points[v][0], reduce(lambda p, c: (c[0], distance(c[1], points[v][0])) if (distance(c[1], points[v][0])<p[1]) else p, centroids, (0, 10000))[0])),points))
+        old_centroids = list(centroids)
         centroids = list(enumerate(list(map(lambda a: my_divide(a[0], a[1]), reduce(reducePoints, points, dict()).values()))))
+        if(old_centroids==centroids):
+          print("Final iteration "+ str(i))
+          break
+        if i==0 or i==1 or i==2 or i==3 or i==4 or i==5 or i==6 or i==7 or i==8 or i==9 or i==10 or i==250:
+            embedding['cluster'] = reduce(clusterCells, list(map(lambda a:(a[0], a[1][1]), list(zip(points.keys(), points.values())))),[])
+            plt.figure(figsize=(8, 6))
+            plt.scatter(embedding.umap1,embedding.umap2,c=[sn.color_palette()[x] for x in embedding.cluster]) 
     cells_by_clusters = list(map(lambda a:(a[0], a[1][1]), list(zip(points.keys(), points.values()))))
     return reduce(clusterCells, cells_by_clusters,[])
 
@@ -204,12 +213,7 @@ groupCellsArray = reduce(groupCells, sorted(rankedGenes, key=lambda x: (x[1], x[
 points = groupCellsArray
 # 3.2
 clusters = cluster(10, 250)
-#print(clusters)
-embedding = pd.read_table('/content/gdrive/MyDrive/umap.tsv')
 embedding['cluster'] = clusters
 plt.figure(figsize=(8, 6))
-plt.scatter(
-    embedding.umap1,
-    embedding.umap2,
-    c=[sn.color_palette()[x] for x in embedding.cluster]
-)
+plt.scatter(embedding.umap1,embedding.umap2,c=[sn.color_palette()[x] for x in embedding.cluster]) 
+#print(clusters)
