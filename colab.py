@@ -6,6 +6,9 @@ import functools
 from functools import reduce
 import math
 from random import uniform, sample
+from google.colab import drive 
+
+drive.mount('/content/gdrive')
 
 centerNum = -1
 averagesArray = []
@@ -94,6 +97,7 @@ def rankGenes(accumulator, current):
         if accumulator[1][len(accumulator[1]) - 1][1] == current[1]:
             accumulator[1].append((current[0], current[1], current[2]))
         else:
+            #accumulator[1].sort(key=lambda x: x[2])
             for i in range(0, len(accumulator[1])):
                 accumulator[0].append((accumulator[1][i][0], accumulator[1][i][1], accumulator[1][i][2], i + 1))
             accumulator[1] = [(current[0], current[1], current[2])]
@@ -131,10 +135,12 @@ def clusterCells(accumulator, current):
 def cluster(k, max_interations):
     global points
 
-    cds = list(range(0, k))
+    cds = list(range(0, k))#sample(range(len(list(points.keys()))), k)
     centroids = []
     for i in cds:
         centroids.append((len(centroids), list(points.values())[i]))
+    
+    #centroids = list(enumerate(list(map(lambda _:list(map(lambda _: uniform(min(list(map(lambda a:min(a),points.values()))), max(list(map(lambda a:max(a),points.values())))), list(points.values())[0])),list(range(0,k))))))
     
     points = dict(map(lambda v: (v, (points[v], 0)),points))
     for _ in range(0, max_interations+1):
@@ -144,59 +150,66 @@ def cluster(k, max_interations):
     return reduce(clusterCells, cells_by_clusters,[])
 
 
-if __name__ == '__main__':
-    # startingData
-    df = pd.read_table('ekspresije.tsv', index_col=0)
-    print(df.shape)
-    data = [(cell, gene, value) for cell in df.columns
-            for gene, value in df[cell].items()]
+# startingData
+df = pd.read_table('/content/gdrive/MyDrive/ekspresije.tsv', index_col=0)
+#print(df.shape)
+data = [(cell, gene, value) for cell in df.columns
+        for gene, value in df[cell].items()]
     
-    # 1.1
-    averagesArray = reduce(averages, data, [])
-    averagesArray[len(averagesArray)-1] = average_finalize(averagesArray[len(averagesArray)-1])
+# 1.1
+averagesArray = reduce(averages, data, [])
+averagesArray[len(averagesArray)-1] = average_finalize(averagesArray[len(averagesArray)-1])
 
-    # 1.2
-    centerArray = list(map(center, data))
-    centerNum = -1
+# 1.2
+centerArray = list(map(center, data))
+centerNum = -1
 
-    # 1.3
-    varianceArray = reduce(variance, centerArray, [])
-    varianceArray[len(varianceArray)-1] = variance_finalize(varianceArray[len(varianceArray)-1])
+# 1.3
+varianceArray = reduce(variance, centerArray, [])
+varianceArray[len(varianceArray)-1] = variance_finalize(varianceArray[len(varianceArray)-1])
 
-    # 1.4
-    standardDeviationArray = list(map(lambda x: (x[0], math.sqrt(x[1])), varianceArray))
-    standardDeviationDict = dict(map(lambda x: (x[0], math.sqrt(x[1])), varianceArray))
+# 1.4
+standardDeviationArray = list(map(lambda x: (x[0], math.sqrt(x[1])), varianceArray))
+standardDeviationDict = dict(map(lambda x: (x[0], math.sqrt(x[1])), varianceArray))
 
-    # 1.5
-    standardisedValuesArray = list(map(lambda x: (x[0], x[1], x[2] / standardDeviationDict[x[0]]), centerArray))
+# 1.5
+standardisedValuesArray = list(map(lambda x: (x[0], x[1], x[2] / standardDeviationDict[x[0]]), centerArray))
 
-    # 2.1
-    geneAveragesDict = reduce(geneAverage, standardisedValuesArray, dict())
-    geneCenterArray = list(map(lambda x: (x[1], x[0], x[2] - geneAveragesDict[x[1]][0]), standardisedValuesArray))
-    centerNum = -1
-    geneCenterArray.sort(key=lambda x: x[0])
-    geneVarianceArray = reduce(variance, geneCenterArray, [])
-    geneVarianceArray[len(geneVarianceArray)-1] = variance_finalize(geneVarianceArray[len(geneVarianceArray)-1])
+# 2.1
+geneAveragesDict = reduce(geneAverage, standardisedValuesArray, dict())
+geneCenterArray = list(map(lambda x: (x[1], x[0], x[2] - geneAveragesDict[x[1]][0]), standardisedValuesArray))
+centerNum = -1
+geneCenterArray.sort(key=lambda x: x[0])
+geneVarianceArray = reduce(variance, geneCenterArray, [])
+geneVarianceArray[len(geneVarianceArray)-1] = variance_finalize(geneVarianceArray[len(geneVarianceArray)-1])
     
-    # 2.2
-    mostVariableGenesArray = sorted(geneVarianceArray, key=lambda x: abs(x[1]), reverse=True)
-    mostVariableGenesDict = reduce(topG, mostVariableGenesArray, [dict(), 0])[0]
+# 2.2
+mostVariableGenesArray = sorted(geneVarianceArray, key=lambda x: abs(x[1]), reverse=True)
+mostVariableGenesDict = reduce(topG, mostVariableGenesArray, [dict(), 0])[0]
 
-    # 2.3, 2.4
-    filteredGenes = sorted(reduce(geneFilter, standardisedValuesArray, []), key=lambda x: (x[1], x[2]))
+# 2.3, 2.4
+filteredGenes = sorted(reduce(geneFilter, standardisedValuesArray, []), key=lambda x: (x[1], x[2]))
 
-    # 2.5
-    rankedGenesAccumulator = reduce(rankGenes, filteredGenes, [[], []])
-    for i in range(0, len(rankedGenesAccumulator[1])):
-        rankedGenesAccumulator[0].append((rankedGenesAccumulator[1][i][0], rankedGenesAccumulator[1][i][1], rankedGenesAccumulator[1][i][2], i + 1))
-    rankedGenes = rankedGenesAccumulator[0]
+# 2.5
+rankedGenesAccumulator = reduce(rankGenes, filteredGenes, [[], []])
+for i in range(0, len(rankedGenesAccumulator[1])):
+    rankedGenesAccumulator[0].append((rankedGenesAccumulator[1][i][0], rankedGenesAccumulator[1][i][1], rankedGenesAccumulator[1][i][2], i + 1))
+rankedGenes = rankedGenesAccumulator[0]
 
-    # 2.6
-    rankedGenesNoOriginal = list(map(lambda a: (a[0], a[1], a[3]), rankedGenes))
+# 2.6
+rankedGenesNoOriginal = list(map(lambda a: (a[0], a[1], a[3]), rankedGenes))
     
-    # 3.1
-    groupCellsArray = reduce(groupCells, sorted(rankedGenes, key=lambda x: (x[1], x[0])), dict())
-    points = groupCellsArray
-    # 3.2
-    clusters = cluster(4, 2)
-    print(clusters)
+# 3.1
+groupCellsArray = reduce(groupCells, sorted(rankedGenes, key=lambda x: (x[1], x[0])), dict())
+points = groupCellsArray
+# 3.2
+clusters = cluster(10, 250)
+#print(clusters)
+embedding = pd.read_table('/content/gdrive/MyDrive/umap.tsv')
+embedding['cluster'] = clusters
+plt.figure(figsize=(8, 6))
+plt.scatter(
+    embedding.umap1,
+    embedding.umap2,
+    c=[sn.color_palette()[x] for x in embedding.cluster]
+)
