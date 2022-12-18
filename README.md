@@ -1,8 +1,7 @@
 Project <br>
 2 clusters, after 1, 10 and 250 iterations<br>
-![2 clusters, 1 iteration](https://user-images.githubusercontent.com/24946127/208309569-3466bd1c-f994-41fd-8693-fedd480eeffd.png)
-![2 clusters, 10 iterations](https://user-images.githubusercontent.com/24946127/208309571-e52d4e04-ad8d-4856-89b4-d85ce77f51c1.png)
-![2 clusters, 250 iterations](https://user-images.githubusercontent.com/24946127/208309572-0184f597-e093-4916-88ca-b735bb825f3f.png)
+
+|![2 clusters, 1 iteration](https://user-images.githubusercontent.com/24946127/208309569-3466bd1c-f994-41fd-8693-fedd480eeffd.png)|![2 clusters, 10 iterations](https://user-images.githubusercontent.com/24946127/208309571-e52d4e04-ad8d-4856-89b4-d85ce77f51c1.png)|![2 clusters, 250 iterations](https://user-images.githubusercontent.com/24946127/208309572-0184f597-e093-4916-88ca-b735bb825f3f.png)|
 
 4 clusters, after 1, 10 and 250 iterations
 ![4 clusters, 1 iteration](https://user-images.githubusercontent.com/24946127/208309597-298a1548-3488-4471-903e-335c98ea0fb1.png)
